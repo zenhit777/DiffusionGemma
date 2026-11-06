@@ -1,6 +1,6 @@
 services:
   vllm:
-    image: vllm/vllm-openai:latest
+    image: vllm/vllm-openai:gemma
     container_name: diffusiongemma-vllm
     runtime: nvidia
     entrypoint: ["/app/wsl_entrypoint.sh"]
@@ -8,12 +8,12 @@ services:
       - HF_TOKEN=${HF_TOKEN:-}
       - HF_HOME=${HF_HOME:-}
       - HF_MODEL=${HF_MODEL:-"google/diffusiongemma-26B-A4B-it"}
-      - CUDA_VISIBLE_DEVICES=1
+      - CUDA_VISIBLE_DEVICES=0
       - VLLM_USE_V2_MODEL_RUNNER=1
     volumes:
       - ./wsl_entrypoint.sh:/app/wsl_entrypoint.sh:ro
       - ${HF_HOME}:/root/.cache/huggingface
-    #  - ./vllm_cache:/root/.cache/vllm
+      - ./vllm_cache:/root/.cache/vllm
     shm_size: 16g
     ipc: host
     deploy:
@@ -39,9 +39,10 @@ services:
       --generation-config vllm
       --hf-overrides '{"diffusion_sampler":"entropy_bound","diffusion_entropy_bound":0.1}'
       --diffusion-config '{"canvas_length":256}'
-    #  --enable-auto-tool-choice
-    #  --tool-call-parser=gemma4
-    #  --reasoning-parser=gemma4
+      --enable-auto-tool-choice
+      --tool-call-parser gemma4
+      --reasoning-parser gemma4
+      --chat-template examples/tool_chat_template_gemma4.jinja
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 10s
