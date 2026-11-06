@@ -1,0 +1,43 @@
+services:
+  vllm:
+    image: vllm/vllm-openai:latest
+    container_name: diffusiongemma-vllm
+    runtime: nvidia
+    entrypoint: ["/app/wsl_entrypoint.sh"]
+    environment:
+      - HF_TOKEN=${HF_TOKEN:-}
+      - CUDA_VISIBLE_DEVICES=0
+      - VLLM_USE_V2_MODEL_RUNNER=1
+    volumes:
+      - ./wsl_entrypoint.sh:/app/wsl_entrypoint.sh:ro
+      - ./hf_cache:/root/.cache/huggingface
+      - ./vllm_cache:/root/.cache/vllm
+    shm_size: 16g
+    ipc: host
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    command: >
+      --model cyankiwi/diffusiongemma-26B-A4B-it-AWQ-INT4
+      --served-model-name diffusiongemma
+      --host 0.0.0.0
+      --max-num-seqs 4
+      --gpu-memory-utilization 0.85
+      --max-model-len 262144
+      --dtype auto
+      --enable-chunked-prefill
+      --generation-config vllm
+      --hf-overrides '{"diffusion_sampler":"entropy_bound","diffusion_entropy_bound":0.1}'
+      --diffusion-config '{"canvas_length":256}'
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 60s
+    ports:
+      - "8000:8000"
