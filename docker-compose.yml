@@ -10,6 +10,7 @@ services:
       - HF_MODEL=${HF_MODEL:-"google/diffusiongemma-26B-A4B-it"}
       - CUDA_VISIBLE_DEVICES=0
       - VLLM_USE_V2_MODEL_RUNNER=1
+      - VLLM_WSL2_ENABLE_PIN_MEMORY=1
     volumes:
       - ./wsl_entrypoint.sh:/app/wsl_entrypoint.sh:ro
       - ${HF_HOME}:/root/.cache/huggingface
