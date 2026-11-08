@@ -1,12 +1,5 @@
 .env
 state/
 vllm_cache/
-__pycache__/bench_20.cpython-312.pyc
-bench_20.out
-bench_20.py
-bench_iter.py
-docker-compose.yml.orig
-repro_20.out
-repro_20.py
-repro_20.sh
-trace_20_tests.md
+__pycache__/
+*.pyc

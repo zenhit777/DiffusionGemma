@@ -7,10 +7,11 @@ services:
     environment:
       - HF_TOKEN=${HF_TOKEN:-}
       - HF_HOME=${HF_HOME:-}
-      - HF_MODEL=${HF_MODEL:-"RedHatAI/diffusiongemma-26B-A4B-it-NVFP4"}
+      - HF_MODEL=${HF_MODEL:-RedHatAI/diffusiongemma-26B-A4B-it-NVFP4}
       - CUDA_VISIBLE_DEVICES=0
       - VLLM_USE_V2_MODEL_RUNNER=1
       - VLLM_WSL2_ENABLE_PIN_MEMORY=1
+      - VLLM_LOG_STATS_INTERVAL=${VLLM_LOG_STATS_INTERVAL:-10}
     volumes:
       - ./wsl_entrypoint.sh:/app/wsl_entrypoint.sh:ro
       - ${HF_HOME}:/root/.cache/huggingface
@@ -24,32 +25,46 @@ services:
             - driver: nvidia
               count: 1
               capabilities: [gpu]
-    command: >
-      --model ${HF_MODEL}
-      --served-model-name diffusiongemma
-      --host 0.0.0.0
-      --port 8000
-      --tensor-parallel-size 1
-      --gpu-memory-utilization 0.90
-      --max-model-len 262144
-      --kv-cache-dtype fp8
-      --dtype auto
-      --generation-config vllm
-      --hf-overrides '{"diffusion_sampler":"entropy_bound","diffusion_entropy_bound":0.1}'
-      --diffusion-config '{"canvas_length":256}'
-      --enable-auto-tool-choice
-      --tool-call-parser gemma4
-      --reasoning-parser gemma4
-      --kv-cache-dtype-skip-layers sliding_window
-      --chat-template examples/tool_chat_template_gemma4.jinja
-      --default-chat-template-kwargs '{"enable_thinking":true}'
-      --max-num-seqs 1
-      --enable-chunked-prefill
+    command:
+      - '--model'
+      - '${HF_MODEL:-RedHatAI/diffusiongemma-26B-A4B-it-NVFP4}'
+      - '--served-model-name'
+      - 'diffusiongemma'
+      - '--host'
+      - '0.0.0.0'
+      - '--port'
+      - '8000'
+      - '--tensor-parallel-size'
+      - '1'
+      - '--gpu-memory-utilization'
+      - '0.85'
+      - '--max-model-len'
+      - '262144'
+      - '--kv-cache-dtype'
+      - 'fp8'
+      - '--dtype'
+      - 'auto'
+      - '--generation-config'
+      - 'vllm'
+      - '--max-num-seqs'
+      - '4'
+      - '--enable-chunked-prefill'
+      - '--diffusion-config'
+      - '{"canvas_length":512,"max_denoising_steps":8}'
+      - '--enable-auto-tool-choice'
+      - '--tool-call-parser'
+      - 'gemma4'
+      - '--reasoning-parser'
+      - 'gemma4'
+      - '--chat-template'
+      - 'examples/tool_chat_template_gemma4.jinja'
+      - '--default-chat-template-kwargs'
+      - '{"enable_thinking":true}'
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
-      interval: 10s
+      interval: 15s
       timeout: 5s
-      retries: 12
-      start_period: 60s
+      retries: 40
+      start_period: 600s
     ports:
       - "8000:8000"
