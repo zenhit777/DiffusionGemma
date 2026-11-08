@@ -7,7 +7,7 @@ services:
     environment:
       - HF_TOKEN=${HF_TOKEN:-}
       - HF_HOME=${HF_HOME:-}
-      - HF_MODEL=${HF_MODEL:-"google/diffusiongemma-26B-A4B-it"}
+      - HF_MODEL=${HF_MODEL:-"RedHatAI/diffusiongemma-26B-A4B-it-NVFP4"}
       - CUDA_VISIBLE_DEVICES=0
       - VLLM_USE_V2_MODEL_RUNNER=1
       - VLLM_WSL2_ENABLE_PIN_MEMORY=1
@@ -30,21 +30,21 @@ services:
       --host 0.0.0.0
       --port 8000
       --tensor-parallel-size 1
-      --max-num-seqs 4
-      --gpu-memory-utilization 0.75
+      --gpu-memory-utilization 0.90
       --max-model-len 262144
       --kv-cache-dtype fp8
-      --kv-cache-dtype-skip-layers sliding_window
       --dtype auto
-      --enable-chunked-prefill
       --generation-config vllm
       --hf-overrides '{"diffusion_sampler":"entropy_bound","diffusion_entropy_bound":0.1}'
       --diffusion-config '{"canvas_length":256}'
       --enable-auto-tool-choice
       --tool-call-parser gemma4
       --reasoning-parser gemma4
+      --kv-cache-dtype-skip-layers sliding_window
       --chat-template examples/tool_chat_template_gemma4.jinja
       --default-chat-template-kwargs '{"enable_thinking":true}'
+      --max-num-seqs 1
+      --enable-chunked-prefill
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 10s
